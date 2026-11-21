@@ -9,12 +9,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.mockito.Mockito.verify;
 
+import java.util.Objects;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -47,8 +48,8 @@ class AuthControllerTest {
     @MockitoBean
     private JavaMailSender mailSender;
 
-    private String login(String email) throws Exception {
-        return login(email, "password");
+    private String login() throws Exception {
+        return login("student@kriegspiel.com", "password");
     }
 
     private String login(String email, String password) throws Exception {
@@ -63,7 +64,7 @@ class AuthControllerTest {
 
     @Test
     void loginStudentWorks() throws Exception {
-        login("student@kriegspiel.com");
+        login();
     }
 
     @Test
@@ -113,7 +114,7 @@ class AuthControllerTest {
 
         ArgumentCaptor<SimpleMailMessage> messageCaptor = ArgumentCaptor.forClass(SimpleMailMessage.class);
         verify(mailSender).send(messageCaptor.capture());
-        String resetLink = messageCaptor.getValue().getText().lines()
+        String resetLink = Objects.requireNonNull(messageCaptor.getValue().getText()).lines()
                 .filter(line -> line.contains("/reset-password?token="))
                 .findFirst()
                 .orElseThrow();
@@ -141,7 +142,7 @@ class AuthControllerTest {
 
     @Test
     void adminEndpointRejectsStudent() throws Exception {
-        String token = extractToken(login("student@kriegspiel.com"));
+        String token = extractToken(login());
         mockMvc.perform(get("/api/admin/test")
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isForbidden());

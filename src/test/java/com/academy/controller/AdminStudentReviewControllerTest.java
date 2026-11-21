@@ -13,7 +13,7 @@ import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
@@ -37,7 +37,7 @@ class AdminStudentReviewControllerTest {
     @Test
     void adminVerifiesRegistrationAndAssignsApprovedClass() throws Exception {
         String email = "profile-review-" + UUID.randomUUID() + "@kriegspiel.com";
-        Course requestedCourse = courseRepository.findAll().get(0);
+        Course requestedCourse = courseRepository.findAll().getFirst();
         Course approvedCourse = courseRepository.findAll().stream()
                 .filter(course -> !course.getId().equals(requestedCourse.getId()))
                 .findFirst()
@@ -55,7 +55,7 @@ class AdminStudentReviewControllerTest {
                 .andExpect(jsonPath("$.user.profileStatus").value("PENDING_REVIEW"))
                 .andReturn();
         String studentToken = extractToken(registration.getResponse().getContentAsString());
-        String adminToken = login("admin@kriegspiel.com", "admin123");
+        String adminToken = login();
 
         MvcResult pendingProfiles = mockMvc.perform(get("/api/admin/students/pending")
                         .header("Authorization", "Bearer " + adminToken))
@@ -65,7 +65,7 @@ class AdminStudentReviewControllerTest {
         assertTrue(pendingJson.contains(email));
         assertTrue(pendingJson.contains(requestedCourse.getTitle()));
 
-        Long studentId = com.fasterxml.jackson.databind.json.JsonMapper.builder().build()
+        long studentId = com.fasterxml.jackson.databind.json.JsonMapper.builder().build()
                 .readTree(registration.getResponse().getContentAsString()).path("user").path("id").asLong();
         mockMvc.perform(get("/api/admin/students/" + studentId + "/photo")
                         .header("Authorization", "Bearer " + adminToken))
@@ -104,10 +104,10 @@ class AdminStudentReviewControllerTest {
                 .andExpect(status().isCreated());
     }
 
-    private String login(String email, String password) throws Exception {
+    private String login() throws Exception {
         MvcResult result = mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"email\":\"" + email + "\",\"password\":\"" + password + "\"}"))
+                        .content("{\"email\":\"" + "admin@kriegspiel.com" + "\",\"password\":\"" + "admin123" + "\"}"))
                 .andExpect(status().isOk())
                 .andReturn();
         return extractToken(result.getResponse().getContentAsString());

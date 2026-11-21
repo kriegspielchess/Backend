@@ -10,7 +10,7 @@ import java.time.LocalDate;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
@@ -43,7 +43,7 @@ class StudentPaymentControllerTest {
     @Test
     void studentCanSubmitAndReviewTheirPaymentSlip() throws Exception {
         String token = loginAsStudent();
-        Course course = courseRepository.findAll().get(0);
+        Course course = courseRepository.findAll().getFirst();
         User student = userRepository.findByEmail("student@kriegspiel.com").orElseThrow();
         student.setClassName(course.getTitle());
         userRepository.save(student);
